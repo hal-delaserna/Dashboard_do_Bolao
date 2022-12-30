@@ -1,43 +1,71 @@
-
+# library(ggpubr)
+# library(jpeg)
+# img <- readJPEG("./images/logo.jpg")
 
 server <- function(input, output, session) {
   
-  output$id.Histograma <- 
+  output$id.Histograma <-
     renderPlot({
-    hist(df_Bolao$Valor, breaks = 30, col = 'darkgray', border = 'white',
-         xlab = 'Aposta (R$)', ylab = "Nº de Servidores",
-         main = 'Histograma das Apostas')
-  })
+      ggplot(data = df_Bolao) +
+        # background_image(img) +
+        geom_histogram(mapping = aes(x = Valor)) +
+        # ggtitle(label = "histograma das apostas") +
+        theme_minimal() + 
+        scale_x_continuous(breaks = pretty(range(df_Bolao$Valor),
+                                           n = nclass.Sturges(df_Bolao$Valor),
+                                           min.n = 1),
+                           lim = c(0, 1000)) 
+      
+                })
+  
+  
+  # output$id.Logo <-
+  #   renderImage({
+  #     filename <- 
+  #       normalizePath(file.path('./images','logo.jpg'))
+  #     
+  #     list(src = filename,
+  #          contentType = 'image/png'
+  #          )
+  #     
+  #   }, deleteFile = FALSE)
+  
+  
   
   output$id.wordCloud <- 
-    renderWordcloud2({
-      wordcloud2(data = df_Bolao[c('Nome', 'Valor')], size = 0.2)
-      })
+     renderPlot({
+       wordcloud(
+         words = df_Bolao$Nome,freq = df_Bolao$fatia
+         ,min.freq = 20
+         ,max.words = 100
+         ,scale = c(3.0,.09)
+         ,random.order = FALSE
+         ,rot.per = 0.35
+         ,colors = brewer.pal(8, "Dark2")
+         )
+                  })
+    
   
   output$id.Tabela <- 
     renderReactable({
-      reactable(df_Bolao 
+      reactable(df_Bolao[,c("Nome","Valor")] 
                 ,columns = list(
-                 Valor = colDef(align = "center"
-                                # ,aggregate = "count"
-                                ))
+                  Valor = colDef(align = "center"
+                                 ,name = "Valor(R$)")
+                  # ,Nome = colDef(footer = "Se não encontrou seu nome escreva para: humberto.laserna@gmail.com")
+                                )
                 ,resizable = T
                 ,filterable = T
                 ,sortable = T
                 ,pagination = T
+                ,showSortable = T
+                ,striped = T
                 )
-      })
+                    })
   
-    
-  
-  }
+}
 
 
 
 
-# Often we don't want the height of the bar to represent the
-# count of observations, but the sum of some other variable.
-# For example, the following plot shows the number of movies
-# in each rating.
-# m <- ggplot(movies, aes(rating))
-# m + geom_histogram(binwidth = 0.1)
+
